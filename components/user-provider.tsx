@@ -17,7 +17,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const supabase = createClient()
   const [user, setUser] = useState<User | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   
   const logout = async () => {
     await supabase.auth.signOut()
@@ -25,6 +25,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   
   useEffect(() => {
     const getUser = async () => {
+      setIsLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
       setIsAdmin(user?.email === "sittnerkalid@gmail.com")
@@ -37,7 +38,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
       async (event, session) => {
         setUser(session?.user || null)
         setIsAdmin(session?.user?.email === "sittnerkalid@gmail.com")
-        setIsLoading(false)
       }
     )
     

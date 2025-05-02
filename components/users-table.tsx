@@ -52,7 +52,6 @@ export function UsersTable() {
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log(data)
         setUsers((prevUsers) =>
           prevUsers.map((user) => (user.user_id === id ? { ...user, status } : user)),
         )
@@ -82,7 +81,7 @@ export function UsersTable() {
         <TableBody>
           {users.map((user) => (
             <TableRow key={user.user_id}>
-              <TableCell className="font-medium">{user.user_metadata.name}</TableCell>
+              <TableCell className="font-medium">{user.user_metadata?.name}</TableCell>
               <TableCell>{user.email}</TableCell>
               <TableCell>{user.linkedin || "-"}</TableCell>
               <TableCell>{user.github || "-"}</TableCell>
@@ -93,7 +92,7 @@ export function UsersTable() {
               </TableCell>
               <TableCell>
                 {
-                user.status !== "admin" &&
+                  user.status !== "admin" &&
                   (
                     <Button onClick={() => handleStatusChange(user.user_id, user.status === "not_allowed" ? "active" : "not_allowed")}>{user.status === "active" ? "Deactivate" : "Activate"}</Button>
                   )
