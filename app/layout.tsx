@@ -10,8 +10,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "CV Scribe - AI-Powered Resume Builder",
-  description: "Create tailored resumes for job applications with AI assistance",
-  generator: 'v0.dev'
+  description: "Create tailored resumes for job applications with AI assistance"
 }
 
 export default function RootLayout({
