@@ -46,7 +46,7 @@ const applications = [
 ]
 
 export function ApplicationsTable() {
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "reply":
         return "bg-blue-100 text-blue-800"
@@ -63,7 +63,7 @@ export function ApplicationsTable() {
     }
   }
 
-  const getStatusLabel = (status) => {
+  const getStatusLabel = (status: string) => {
     switch (status) {
       case "reply":
         return "Initial Reply"

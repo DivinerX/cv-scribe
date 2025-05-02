@@ -8,6 +8,7 @@ import { ApplicationsChart } from "@/components/applications-chart"
 import { ApplicationsTable } from "@/components/applications-table"
 import { UserStatsChart } from "@/components/user-stats-chart"
 import { ApplicationStatusChart } from "@/components/application-status-chart"
+import { UsersTable } from "@/components/users-table"
 
 export default function AdminDashboard() {
   const [timeRange, setTimeRange] = useState("week")
@@ -59,10 +60,11 @@ export default function AdminDashboard() {
       </div>
 
       <Tabs defaultValue="applications" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="applications">Applications</TabsTrigger>
           <TabsTrigger value="users">User Activity</TabsTrigger>
           <TabsTrigger value="status">Application Status</TabsTrigger>
+          <TabsTrigger value="usersTable">Users</TabsTrigger>
         </TabsList>
         <TabsContent value="applications">
           <Card>
@@ -106,6 +108,18 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent className="h-[400px]">
               <ApplicationStatusChart />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="usersTable">
+          <Card>
+            <CardHeader>
+              <CardTitle>User Management</CardTitle>
+              <CardDescription>View and manage user accounts</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <UsersTable />
             </CardContent>
           </Card>
         </TabsContent>
