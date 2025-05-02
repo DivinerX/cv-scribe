@@ -4,13 +4,23 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { FcGoogle } from "react-icons/fc"
 import { useRouter } from "next/navigation"
+import { supabaseClient } from "@/utils/supabase/client"
 
 export default function SignIn() {
   const router = useRouter()
+  const supabase = supabaseClient()
 
-  const handleGoogleSignIn = () => {
-    // Mock authentication - in a real app, this would trigger Google OAuth
-    router.push("/dashboard")
+  const handleGoogleSignIn = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+
+    if (error) {
+      console.error('Error signing in with Google:', error)
+    }
   }
 
   return (
