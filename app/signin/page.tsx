@@ -3,12 +3,10 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { FcGoogle } from "react-icons/fc"
-import { useRouter } from "next/navigation"
-import { supabaseClient } from "@/utils/supabase/client"
+import { createClient } from "@/utils/supabase/client"
 
 export default function SignIn() {
-  const router = useRouter()
-  const supabase = supabaseClient()
+  const supabase = createClient()
 
   const handleGoogleSignIn = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -27,7 +25,7 @@ export default function SignIn() {
     <div className="container flex items-center justify-center min-h-[calc(100vh-80px)]">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold">Sign in to CV Assist</CardTitle>
+          <CardTitle className="text-2xl font-bold">Sign in to CV Scribe</CardTitle>
           <CardDescription>Continue with Google to access your account</CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center">
