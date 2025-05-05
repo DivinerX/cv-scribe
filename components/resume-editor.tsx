@@ -170,14 +170,13 @@ export function ResumeEditor({ resumeData }: { resumeData: any }) {
     doc.text("PROFESSIONAL EXPERIENCE", margin, yPos)
     doc.line(margin, yPos + 3, pageWidth - margin, yPos + 3)
     yPos += 10
+    
     resume.experience.forEach((exp: any) => {
-      const estimatedHighlightsSpace = exp.highlights.reduce((total: number, highlight: string) => {
-        const lines = doc.splitTextToSize(highlight, contentWidth - 10).length
-        return total + (lines * 5) + 2
-      }, 0)
-      const estimatedExpSpace = 25 + estimatedHighlightsSpace
-
-      checkPageBreak(estimatedExpSpace)
+      // Check if we can fit at least the company name and title
+      if (checkPageBreak(20)) {
+        doc.setFont("helvetica", "bold")
+        doc.setFontSize(13)
+      }
 
       doc.setFont("helvetica", "bold")
       doc.setFontSize(11)
@@ -192,9 +191,11 @@ export function ResumeEditor({ resumeData }: { resumeData: any }) {
       doc.text(`${exp.location} | ${exp.startDate} - ${exp.endDate}`, margin, yPos)
       yPos += 7
 
+      // Process each highlight individually to allow page breaks between them
       exp.highlights.forEach((highlight: string) => {
         const bulletLines = doc.splitTextToSize(`• ${highlight}`, contentWidth - 10)
-
+        
+        // Check if this highlight needs a page break
         if (checkPageBreak(bulletLines.length * 5)) {
           doc.setFont("helvetica", "normal")
           doc.setFontSize(10)
@@ -266,18 +267,18 @@ export function ResumeEditor({ resumeData }: { resumeData: any }) {
               <Download className="mr-2 h-4 w-4" />
               PDF
             </Button>
-            <Button variant="outline" size="sm" onClick={downloadWord}>
+            {/* <Button variant="outline" size="sm" onClick={downloadWord}>
               <FileText className="mr-2 h-4 w-4" />
               Word
-            </Button>
+            </Button> */}
           </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-3">
-        <Tabs defaultValue="edit">
+        <Tabs defaultValue="preview">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="edit">Edit</TabsTrigger>
             <TabsTrigger value="preview">Preview</TabsTrigger>
+            <TabsTrigger value="edit">Edit</TabsTrigger>
           </TabsList>
 
           <TabsContent value="edit" className="space-y-4 max-h-[600px] overflow-y-auto">

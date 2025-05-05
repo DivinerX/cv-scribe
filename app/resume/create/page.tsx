@@ -29,6 +29,8 @@ export default function CreateResume() {
     }
 
     setIsGenerating(true)
+    // Reset resume state before generating a new one
+    setResumeGenerated(false)
 
     await fetch("/api/resume", {
       method: "POST",
@@ -39,7 +41,6 @@ export default function CreateResume() {
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log("data.resume:", data.resume)
         if (data.resume) {
           setResumeData(data.resume)
           setResumeGenerated(true)
@@ -109,7 +110,7 @@ export default function CreateResume() {
                 <ResumeEditor resumeData={resumeData} />
               </TabsContent>
               <TabsContent value="interview">
-                <InterviewQuestions jobDescription={jobDescription} />
+                <InterviewQuestions jobDescription={jobDescription} resumeData={resumeData} />
               </TabsContent>
             </Tabs>
           ) : (

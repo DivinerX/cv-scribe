@@ -53,13 +53,13 @@ export default function Header() {
                     >
                       Create Resume
                     </Link>
-                    <Link
+                    {/* <Link
                       href="/applications"
                       className={`text-sm font-medium transition-colors hover:text-primary ${pathname.startsWith("/applications") ? "text-primary" : "text-muted-foreground"
                         }`}
                     >
                       Applications
-                    </Link>
+                    </Link> */}
                     <Link
                       href="/profile"
                       className={`text-sm font-medium transition-colors hover:text-primary ${pathname.startsWith("/profile") ? "text-primary" : "text-muted-foreground"
@@ -103,12 +103,12 @@ export default function Header() {
                           <span>Dashboard</span>
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
+                      {/* <DropdownMenuItem asChild>
                         <Link href="/applications" className="flex items-center">
                           <Clock className="mr-2 h-4 w-4" />
                           <span>Applications</span>
                         </Link>
-                      </DropdownMenuItem>
+                      </DropdownMenuItem> */}
                       <DropdownMenuItem asChild>
                         <Link href="/profile" className="flex items-center">
                           <User className="mr-2 h-4 w-4" />

@@ -29,8 +29,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const resume = await generateObject({
-      model: openai('gpt-4-turbo-preview'),
-      temperature: 0.5,
+      model: openai('gpt-4o'),
+      temperature: 0.6,
       prompt: prompt,
       schema: z.object({
         title: z.string().describe(`
@@ -117,6 +117,7 @@ export async function POST(request: NextRequest) {
                 2. Specific what/how
                 3. Quantifiable result
                 4. Relevant technology
+                5. Must describe what I did, and achievement in detail
 
                 [EXAMPLE]
                 "Led migration to React hooks, reducing component code by 40% while improving performance scores by 15 points"
@@ -125,11 +126,11 @@ export async function POST(request: NextRequest) {
                 - Must include a result
                 - Avoid routine responsibilities
               `)
-            ).min(5).max(6).describe(`
+            ).min(3).max(6).describe(`
               [CONTENT RULES]
               - Ordered by impact (most impressive first)
               - 5-6 bullets per position
-              - At least 3 quantified achievements
+              - At least 5 quantified achievements
               - No redundant points across positions
             `),
           }).describe(`
@@ -156,6 +157,7 @@ export async function POST(request: NextRequest) {
             - "Category: Skill (Specifics)" for technical
             - "Skill (Proficiency)" when appropriate
             - Group related technologies
+            - Each category should include more than 10 skills except soft skills
 
             [EXAMPLE]
             "Frontend: React (Hooks, Context), Vue 3"
