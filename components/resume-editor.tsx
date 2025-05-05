@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,29 +11,33 @@ import { jsPDF } from "jspdf"
 import { Download, FileText } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
-export function ResumeEditor({ resumeData }) {
+export function ResumeEditor({ resumeData }: { resumeData: any }) {
   const [resume, setResume] = useState(resumeData)
   const { toast } = useToast()
 
-  const handlePersonalInfoChange = (e) => {
+  const handlePersonalInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setResume({
       ...resume,
-      personalInfo: {
-        ...resume.personalInfo,
-        [name]: value,
-      },
+      [name]: value,
     })
   }
 
-  const handleSummaryChange = (e) => {
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setResume({
+      ...resume,
+      title: e.target.value,
+    })
+  }
+
+  const handleSummaryChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setResume({
       ...resume,
       summary: e.target.value,
     })
   }
 
-  const handleExperienceChange = (index, field, value) => {
+  const handleExperienceChange = (index: number, field: string, value: string) => {
     const updatedExperience = [...resume.experience]
     updatedExperience[index] = {
       ...updatedExperience[index],
@@ -45,7 +49,7 @@ export function ResumeEditor({ resumeData }) {
     })
   }
 
-  const handleHighlightChange = (expIndex, highlightIndex, value) => {
+  const handleHighlightChange = (expIndex: number, highlightIndex: number, value: string) => {
     const updatedExperience = [...resume.experience]
     const updatedHighlights = [...updatedExperience[expIndex].highlights]
     updatedHighlights[highlightIndex] = value
@@ -59,7 +63,7 @@ export function ResumeEditor({ resumeData }) {
     })
   }
 
-  const handleEducationChange = (index, field, value) => {
+  const handleEducationChange = (index: number, field: string, value: string) => {
     const updatedEducation = [...resume.education]
     updatedEducation[index] = {
       ...updatedEducation[index],
@@ -71,7 +75,7 @@ export function ResumeEditor({ resumeData }) {
     })
   }
 
-  const handleSkillChange = (index, value) => {
+  const handleSkillChange = (index: number, value: string) => {
     const updatedSkills = [...resume.skills]
     updatedSkills[index] = value
     setResume({
@@ -82,118 +86,163 @@ export function ResumeEditor({ resumeData }) {
 
   const downloadPDF = () => {
     const doc = new jsPDF()
+    const margin = 15
+    const pageWidth = doc.internal.pageSize.width
+    const pageHeight = doc.internal.pageSize.height
+    const contentWidth = pageWidth - (margin * 2)
+    let yPos = 25
+    let currentPage = 1
 
-    // Set font styles
+    const checkPageBreak = (neededSpace: number) => {
+      if (yPos + neededSpace > pageHeight - margin) {
+        doc.addPage()
+        currentPage++
+        yPos = 25
+        return true
+      }
+      return false
+    }
+
     doc.setFont("helvetica", "bold")
     doc.setFontSize(16)
 
-    // Personal Info
-    doc.text(resume.personalInfo.name, 105, 20, { align: "center" })
+    doc.text(resume.name, margin, yPos)
+    yPos += 8
+
+    doc.setFontSize(13)
+    doc.text(resume.title, margin, yPos)
+    yPos += 8
 
     doc.setFont("helvetica", "normal")
     doc.setFontSize(10)
-    doc.text(resume.personalInfo.email, 105, 25, { align: "center" })
-    doc.text(
-      `${resume.personalInfo.phone} | ${resume.personalInfo.location} | ${resume.personalInfo.linkedin}`,
-      105,
-      30,
-      { align: "center" },
-    )
+    doc.text(resume.email, margin, yPos)
+    yPos += 5
+    doc.text(resume.phone, margin, yPos)
+    yPos += 5
+    doc.text(resume.location, margin, yPos)
+    yPos += 5
+    doc.text(resume.linkedin, margin, yPos)
+    yPos += 12
 
-    // Summary
+    checkPageBreak(25)
     doc.setFont("helvetica", "bold")
-    doc.setFontSize(12)
-    doc.text("SUMMARY", 20, 40)
-    doc.line(20, 42, 190, 42)
+    doc.setFontSize(13)
+    doc.text("PROFESSIONAL SUMMARY", margin, yPos)
+    doc.line(margin, yPos + 3, pageWidth - margin, yPos + 3)
+    yPos += 10
+
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(10)
+    const summaryLines = doc.splitTextToSize(resume.summary, contentWidth)
+    doc.text(summaryLines, margin, yPos)
+    yPos += summaryLines.length * 5
+
+    checkPageBreak(25)
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(13)
+    doc.text("SKILLS", margin, yPos)
+    doc.line(margin, yPos + 3, pageWidth - margin, yPos + 3)
+    yPos += 10
+
+    let formattedSkills = ""
+    resume.skills.forEach((skill: string, index: number) => {
+      if (skill.includes(":")) {
+        if (index > 0) formattedSkills += "\n\n"
+        formattedSkills += skill
+      } else {
+        formattedSkills += (formattedSkills.length > 0 && !formattedSkills.endsWith("\n\n") ? " • " : "") + skill
+      }
+    })
 
     doc.setFont("helvetica", "normal")
     doc.setFontSize(10)
 
-    const summaryLines = doc.splitTextToSize(resume.summary, 170)
-    doc.text(summaryLines, 20, 47)
+    const skillsLines = doc.splitTextToSize(formattedSkills, contentWidth)
 
-    // Experience
-    let yPos = 47 + summaryLines.length * 5
+    checkPageBreak(skillsLines.length * 5)
+    doc.text(skillsLines, margin, yPos)
+    yPos += skillsLines.length * 5
+
+    checkPageBreak(25)
 
     doc.setFont("helvetica", "bold")
-    doc.setFontSize(12)
-    doc.text("EXPERIENCE", 20, yPos)
-    doc.line(20, yPos + 2, 190, yPos + 2)
+    doc.setFontSize(13)
+    doc.text("PROFESSIONAL EXPERIENCE", margin, yPos)
+    doc.line(margin, yPos + 3, pageWidth - margin, yPos + 3)
+    yPos += 10
+    resume.experience.forEach((exp: any) => {
+      const estimatedHighlightsSpace = exp.highlights.reduce((total: number, highlight: string) => {
+        const lines = doc.splitTextToSize(highlight, contentWidth - 10).length
+        return total + (lines * 5) + 2
+      }, 0)
+      const estimatedExpSpace = 25 + estimatedHighlightsSpace
 
-    yPos += 7
+      checkPageBreak(estimatedExpSpace)
 
-    resume.experience.forEach((exp) => {
       doc.setFont("helvetica", "bold")
       doc.setFontSize(11)
-      doc.text(exp.title, 20, yPos)
-
-      doc.setFont("helvetica", "normal")
-      doc.text(`${exp.company}, ${exp.location}`, 120, yPos)
-
-      doc.setFontSize(10)
-      doc.text(`${exp.startDate} - ${exp.endDate}`, 170, yPos, { align: "right" })
-
+      doc.text(exp.company, margin, yPos)
       yPos += 5
 
-      exp.highlights.forEach((highlight) => {
-        const bulletLines = doc.splitTextToSize(`• ${highlight}`, 165)
-        doc.text(bulletLines, 25, yPos)
-        yPos += bulletLines.length * 5
-      })
-
-      yPos += 3
-    })
-
-    // Education
-    doc.setFont("helvetica", "bold")
-    doc.setFontSize(12)
-    doc.text("EDUCATION", 20, yPos)
-    doc.line(20, yPos + 2, 190, yPos + 2)
-
-    yPos += 7
-
-    resume.education.forEach((edu) => {
-      doc.setFont("helvetica", "bold")
-      doc.setFontSize(11)
-      doc.text(edu.degree, 20, yPos)
+      doc.text(exp.title, margin, yPos)
+      yPos += 5
 
       doc.setFont("helvetica", "normal")
-      doc.text(`${edu.institution}, ${edu.location}`, 120, yPos)
-
       doc.setFontSize(10)
-      doc.text(edu.graduationDate, 170, yPos, { align: "right" })
-
+      doc.text(`${exp.location} | ${exp.startDate} - ${exp.endDate}`, margin, yPos)
       yPos += 7
+
+      exp.highlights.forEach((highlight: string) => {
+        const bulletLines = doc.splitTextToSize(`• ${highlight}`, contentWidth - 10)
+
+        if (checkPageBreak(bulletLines.length * 5)) {
+          doc.setFont("helvetica", "normal")
+          doc.setFontSize(10)
+        }
+
+        doc.text(bulletLines, margin + 5, yPos)
+        yPos += bulletLines.length * 5 + 2
+      })
+
+      yPos += 8
     })
 
-    // Skills
+    checkPageBreak(25)
     doc.setFont("helvetica", "bold")
-    doc.setFontSize(12)
-    doc.text("SKILLS", 20, yPos)
-    doc.line(20, yPos + 2, 190, yPos + 2)
+    doc.setFontSize(13)
+    doc.text("EDUCATION", margin, yPos)
+    doc.line(margin, yPos + 3, pageWidth - margin, yPos + 3)
+    yPos += 10
 
-    yPos += 7
+    resume.education.forEach((edu: any) => {
+      checkPageBreak(20)
+
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(11)
+      doc.text(edu.institution, margin, yPos)
+      yPos += 5
+
+      doc.setFont("helvetica", "normal")
+      doc.text(edu.degree, margin, yPos)
+      yPos += 5
+
+      doc.text(`${edu.location} | ${edu.graduationDate}`, margin, yPos)
+      yPos += 10
+    })
 
     doc.setFont("helvetica", "normal")
     doc.setFontSize(10)
 
-    const skillsText = resume.skills.join(", ")
-    const skillsLines = doc.splitTextToSize(skillsText, 170)
-    doc.text(skillsLines, 20, yPos)
-
-    // Save the PDF
-    doc.save("resume.pdf")
+    const filename = `${resume.name.replace(/\s+/g, "_")}_Resume.pdf`
+    doc.save(filename)
 
     toast({
       title: "Success",
-      description: "Resume downloaded as PDF",
+      description: `ATS-optimized ${currentPage}-page resume downloaded as PDF`,
     })
   }
 
   const downloadWord = () => {
-    // This is a mock function since we can't actually generate Word docs in the browser
-    // In a real app, this would call a server endpoint to generate a .docx file
-
     toast({
       title: "Info",
       description: "Word download would be implemented with a server-side API",
@@ -201,7 +250,6 @@ export function ResumeEditor({ resumeData }) {
   }
 
   const saveResume = () => {
-    // Mock save function
     toast({
       title: "Success",
       description: "Resume saved successfully",
@@ -240,7 +288,7 @@ export function ResumeEditor({ resumeData }) {
                   <Label htmlFor="name" className="text-sm">
                     Full Name
                   </Label>
-                  <Input id="name" name="name" value={resume.personalInfo.name} onChange={handlePersonalInfoChange} />
+                  <Input id="name" name="name" value={resume.name} onChange={handlePersonalInfoChange} />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="email" className="text-sm">
@@ -249,7 +297,7 @@ export function ResumeEditor({ resumeData }) {
                   <Input
                     id="email"
                     name="email"
-                    value={resume.personalInfo.email}
+                    value={resume.email}
                     onChange={handlePersonalInfoChange}
                   />
                 </div>
@@ -260,7 +308,7 @@ export function ResumeEditor({ resumeData }) {
                   <Input
                     id="phone"
                     name="phone"
-                    value={resume.personalInfo.phone}
+                    value={resume.phone}
                     onChange={handlePersonalInfoChange}
                   />
                 </div>
@@ -271,7 +319,7 @@ export function ResumeEditor({ resumeData }) {
                   <Input
                     id="location"
                     name="location"
-                    value={resume.personalInfo.location}
+                    value={resume.location}
                     onChange={handlePersonalInfoChange}
                   />
                 </div>
@@ -282,11 +330,16 @@ export function ResumeEditor({ resumeData }) {
                   <Input
                     id="linkedin"
                     name="linkedin"
-                    value={resume.personalInfo.linkedin}
+                    value={resume.linkedin}
                     onChange={handlePersonalInfoChange}
                   />
                 </div>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-md font-medium">Professional Title</h3>
+              <Input value={resume.title} onChange={handleTitleChange} />
             </div>
 
             <div className="space-y-2">
@@ -296,7 +349,7 @@ export function ResumeEditor({ resumeData }) {
 
             <div className="space-y-3">
               <h3 className="text-md font-medium">Experience</h3>
-              {resume.experience.map((exp, index) => (
+              {resume.experience.map((exp: any, index: number) => (
                 <Card key={index} className="p-3">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="space-y-1">
@@ -340,7 +393,7 @@ export function ResumeEditor({ resumeData }) {
 
                   <div className="mt-3 space-y-2">
                     <Label className="text-sm">Highlights</Label>
-                    {exp.highlights.map((highlight, hIndex) => (
+                    {exp.highlights.map((highlight: string, hIndex: number) => (
                       <div key={hIndex} className="flex gap-2">
                         <Input
                           value={highlight}
@@ -355,7 +408,7 @@ export function ResumeEditor({ resumeData }) {
 
             <div className="space-y-3">
               <h3 className="text-md font-medium">Education</h3>
-              {resume.education.map((edu, index) => (
+              {resume.education.map((edu: any, index: number) => (
                 <Card key={index} className="p-3">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="space-y-1">
@@ -394,7 +447,7 @@ export function ResumeEditor({ resumeData }) {
             <div className="space-y-3">
               <h3 className="text-md font-medium">Skills</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {resume.skills.map((skill, index) => (
+                {resume.skills.map((skill: string, index: number) => (
                   <Input key={index} value={skill} onChange={(e) => handleSkillChange(index, e.target.value)} />
                 ))}
               </div>
@@ -403,36 +456,57 @@ export function ResumeEditor({ resumeData }) {
 
           <TabsContent value="preview" className="max-h-[600px] overflow-y-auto">
             <div className="bg-white text-black p-6 rounded-lg shadow-inner">
-              <div className="text-center mb-4">
-                <h1 className="text-xl font-bold">{resume.personalInfo.name}</h1>
-                <p className="text-sm">{resume.personalInfo.email}</p>
-                <p className="text-sm">
-                  {resume.personalInfo.phone} | {resume.personalInfo.location} | {resume.personalInfo.linkedin}
-                </p>
+              {/* Header with name and contact info */}
+              <div className="mb-6">
+                <h1 className="text-xl font-bold">{resume.name}</h1>
+                <h2 className="text-lg font-medium mt-2">{resume.title}</h2>
+                <div className="mt-2 text-sm space-y-1">
+                  <p>{resume.email}</p>
+                  <p>{resume.phone}</p>
+                  <p>{resume.location}</p>
+                  <p>{resume.linkedin}</p>
+                </div>
               </div>
 
-              <div className="mb-4">
-                <h2 className="text-md font-bold border-b border-gray-300 mb-1">SUMMARY</h2>
+              {/* Summary */}
+              <div className="mb-6">
+                <h2 className="text-md font-bold border-b border-gray-300 pb-1 mb-3">PROFESSIONAL SUMMARY</h2>
                 <p className="text-sm">{resume.summary}</p>
               </div>
 
-              <div className="mb-4">
-                <h2 className="text-md font-bold border-b border-gray-300 mb-1">EXPERIENCE</h2>
-                {resume.experience.map((exp, index) => (
-                  <div key={index} className="mb-3">
-                    <div className="flex justify-between">
-                      <div>
-                        <h3 className="font-bold text-sm">{exp.title}</h3>
-                        <p className="text-sm">
-                          {exp.company}, {exp.location}
-                        </p>
-                      </div>
-                      <p className="text-sm">
-                        {exp.startDate} - {exp.endDate}
-                      </p>
-                    </div>
-                    <ul className="list-disc pl-5 mt-1">
-                      {exp.highlights.map((highlight, hIndex) => (
+              {/* Skills */}
+              <div>
+                <h2 className="text-md font-bold border-b border-gray-300 pb-1 mb-3">SKILLS</h2>
+                <div className="text-sm">
+                  {resume.skills.map((skill: string, index: number) => (
+                    <React.Fragment key={index}>
+                      {skill.includes(":") ? (
+                        <div className={index > 0 ? "mt-3" : ""}>
+                          {skill}
+                        </div>
+                      ) : (
+                        <span>
+                          {index > 0 && !resume.skills[index - 1].includes(":") ? " • " : ""}
+                          {skill}
+                        </span>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+
+              {/* Experience */}
+              <div className="mb-6">
+                <h2 className="text-md font-bold border-b border-gray-300 pb-1 mb-3">PROFESSIONAL EXPERIENCE</h2>
+                {resume.experience.map((exp: any, index: number) => (
+                  <div key={index} className="mb-4">
+                    <h3 className="font-bold text-sm">{exp.company}</h3>
+                    <h4 className="font-bold text-sm">{exp.title}</h4>
+                    <p className="text-sm mb-2">
+                      {exp.location} | {exp.startDate} - {exp.endDate}
+                    </p>
+                    <ul className="list-disc pl-5 mt-1 space-y-1">
+                      {exp.highlights.map((highlight: string, hIndex: number) => (
                         <li key={hIndex} className="text-sm">
                           {highlight}
                         </li>
@@ -442,24 +516,18 @@ export function ResumeEditor({ resumeData }) {
                 ))}
               </div>
 
-              <div className="mb-4">
-                <h2 className="text-md font-bold border-b border-gray-300 mb-1">EDUCATION</h2>
-                {resume.education.map((edu, index) => (
-                  <div key={index} className="mb-2 flex justify-between">
-                    <div>
-                      <h3 className="font-bold text-sm">{edu.degree}</h3>
-                      <p className="text-sm">
-                        {edu.institution}, {edu.location}
-                      </p>
-                    </div>
-                    <p className="text-sm">{edu.graduationDate}</p>
+              {/* Education */}
+              <div className="mb-6">
+                <h2 className="text-md font-bold border-b border-gray-300 pb-1 mb-3">EDUCATION</h2>
+                {resume.education.map((edu: any, index: number) => (
+                  <div key={index} className="mb-3">
+                    <h3 className="font-bold text-sm">{edu.institution}</h3>
+                    <p className="text-sm">{edu.degree}</p>
+                    <p className="text-sm">
+                      {edu.location} | {edu.graduationDate}
+                    </p>
                   </div>
                 ))}
-              </div>
-
-              <div>
-                <h2 className="text-md font-bold border-b border-gray-300 mb-1">SKILLS</h2>
-                <p className="text-sm">{resume.skills.join(", ")}</p>
               </div>
             </div>
           </TabsContent>
