@@ -1,26 +1,24 @@
-import { createClient } from '@/utils/supabase/server'
+import { getAllUsersWithProfiles } from '@/utils/db'
 import { NextRequest, NextResponse } from 'next/server'
+import { getCurrentSession } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient()
+  // Check if user is admin
+  const session = await getCurrentSession()
 
-  // Get users from auth.users table
-  const { data: { users }, error: authError } = await supabase.auth.admin.listUsers()
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
-  // Get profiles data
-  const { data: profiles, error: profilesError } = await supabase.from('profiles').select('*')
+  try {
+    // Get all users with their profiles
+    const usersWithProfiles = await getAllUsersWithProfiles()
 
-  // Combine users and profiles data
-  let usersWithProfile = users.map((user) => {
-    const profile = profiles?.find((profile) => profile.user_id === user.id)
-    return {
-      ...user,
-      ...profile,
-    }
-  })
-
-  return NextResponse.json({
-    users: usersWithProfile || [],
-    error: authError || profilesError
-  })
+    return NextResponse.json({
+      users: usersWithProfiles || []
+    })
+  } catch (error) {
+    console.error('Error fetching users:', error)
+    return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 })
+  }
 }

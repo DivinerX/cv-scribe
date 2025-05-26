@@ -1,12 +1,13 @@
-import { createClient } from '@/utils/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from 'ai'
 import { openai } from '@ai-sdk/openai'
+import { getCurrentSession } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
-	const supabase = await createClient()
-	const { data: { user } } = await supabase.auth.getUser()
-	if (!user) {
+	// Get user ID from session
+	const session = await getCurrentSession()
+
+	if (!session?.user?.id) {
 		return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 	}
 	const { resume, question, jobDescription } = await request.json()

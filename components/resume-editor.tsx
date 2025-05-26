@@ -234,7 +234,9 @@ export function ResumeEditor({ resumeData }: { resumeData: any }) {
     doc.setFont("helvetica", "normal")
     doc.setFontSize(10)
 
-    const filename = `${resume.name.replace(/\s+/g, "_")}_Resume.pdf`
+    const now = new Date()
+    const formattedDate = `${now.getFullYear()}${String(now.getMonth()).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`
+    const filename = `${resume.name.replace(/\s+/g, "_")}_resume_${formattedDate}.pdf`
     doc.save(filename)
 
     toast({

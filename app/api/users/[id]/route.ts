@@ -1,25 +1,37 @@
-import { createClient } from '@/utils/supabase/server'
+import { updateProfileStatus, getProfileByUserId } from '@/utils/db'
 import { NextRequest, NextResponse } from 'next/server'
+import { getCurrentSession } from '@/lib/auth'
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = await createClient()
+  // Check if user is admin
+  const session = await getCurrentSession()
+
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const { status } = await request.json()
   const id = (await params).id
 
-  console.log("id: ", id)
-  console.log("status: ", status)
+  try {
+    // Check if user exists
+    const existingUser = await getProfileByUserId(parseInt(id))
 
-  const { data: existingUser } = await supabase.from('profiles').select('*').eq('user_id', id)
-  console.log("existingUser: ", existingUser)
+    if (!existingUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
 
-  const { data, error } = await supabase.from('profiles').update({ status: status }).eq('user_id', id).select('*')
+    // Update user status
+    const updatedProfile = await updateProfileStatus(parseInt(id), status)
 
-  console.log("data: ", data)
-  return NextResponse.json({
-    data,
-    error
-  })
+    return NextResponse.json({
+      data: updatedProfile
+    })
+  } catch (error) {
+    console.error('Error updating user status:', error)
+    return NextResponse.json({ error: 'Failed to update user status' }, { status: 500 })
+  }
 }

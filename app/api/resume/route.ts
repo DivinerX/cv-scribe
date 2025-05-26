@@ -1,33 +1,40 @@
-import { createClient } from '@/utils/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { generateObject } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { resumeEditorPrompt } from './prompt'
+import { getProfileByUserId } from '@/utils/db'
+import { getCurrentSession } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  // Get user ID from session
+  const session = await getCurrentSession()
 
-  if (!user) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const userId = user.id
-  const { data: profile } = await supabase.from('profiles').select('*').eq('user_id', userId).single()
-  const { jobDescription } = await request.json()
-
-  const feedForPrompt = {
-    location: profile!.location,
-    experience: profile!.experience,
-    skills: profile!.skills,
-    projects: profile!.projects,
-    education: profile!.education
-  }
-
-  const prompt = resumeEditorPrompt(jobDescription, feedForPrompt)
+  const userId = session.user.id
 
   try {
+    // Get profile data
+    const profile = await getProfileByUserId(userId)
+
+    if (!profile) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+    }
+
+    const { jobDescription } = await request.json()
+
+    const feedForPrompt = {
+      location: profile.location,
+      experience: profile.experience,
+      skills: profile.skills,
+      projects: profile.projects,
+      education: profile.education
+    }
+
+    const prompt = resumeEditorPrompt(jobDescription, feedForPrompt)
     const resume = await generateObject({
       model: openai('gpt-4o'),
       temperature: 0.6,
@@ -38,7 +45,7 @@ export async function POST(request: NextRequest) {
           - Professional job title matching the target role
           - Include specialization area when applicable
           - Should reflect the candidate's most senior or relevant expertise
-          
+
           [EXAMPLES]
           "Senior Full Stack Developer"
           "Data Engineer"
@@ -66,7 +73,7 @@ export async function POST(request: NextRequest) {
               - Should show career progression or related roles in the same field
               - Match level to JD when appropriate (Junior/Senior/etc.)
               - No company-specific titles
-              - Titles should be related to the overall resume title (e.g., "Frontend Developer" 
+              - Titles should be related to the overall resume title (e.g., "Frontend Developer"
                 and "Backend Developer" are acceptable for a "Full Stack Developer" resume)
 
               [EXAMPLES]
@@ -126,17 +133,16 @@ export async function POST(request: NextRequest) {
                 - Must include a result
                 - Avoid routine responsibilities
               `)
-            ).min(3).max(6).describe(`
+            ).min(3).max(20).describe(`
               [CONTENT RULES]
               - Ordered by impact (most impressive first)
-              - 5-6 bullets per position
+              - 10-15 bullets per position
               - At least 5 quantified achievements
               - No redundant points across positions
             `),
           }).describe(`
             [SECTION RULES]
             - Most recent first
-            - Maximum 10 years history (unless critical)
             - Combine similar short-term roles
             - Gaps >6 months need explanation
             - Each company MUST appear only ONCE in the entire experience section

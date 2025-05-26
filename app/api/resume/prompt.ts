@@ -35,7 +35,7 @@ Notable strengths to highlight:
 - Format for each position:
   • Job Title @ Company | Location | Dates
   • Job titles should show career progression or related roles in the same field
-  • 4-6 achievement bullets following CAR (Challenge-Action-Result) format
+  • 10-15 achievement bullets following CAR (Challenge-Action-Result) format in more than 20 words
 - IMPORTANT: Each company must appear ONLY ONCE in the experience section
 - If a person had multiple roles at the same company, choose the most senior/relevant role
 - Never duplicate company entries with different job titles

@@ -1,53 +1,63 @@
 "use client"
 
-import { createClient } from "@/utils/supabase/client"
-import { User } from "@supabase/supabase-js"
-import { createContext, useContext, useEffect, useState, ReactNode } from "react"
+import { createContext, useContext, ReactNode, useState, useEffect } from "react"
+import { User } from "@/lib/auth"
 
 type UserContextType = {
   user: User | null
   isAdmin: boolean
   isLoading: boolean
   logout: () => Promise<void>
+  refreshUser: () => Promise<void>
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined)
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const supabase = createClient()
   const [user, setUser] = useState<User | null>(null)
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  
-  const logout = async () => {
-    await supabase.auth.signOut()
-  }
-  
-  useEffect(() => {
-    const getUser = async () => {
-      setIsLoading(true)
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      setIsAdmin(user?.email === "sittnerkalid@gmail.com")
+  const [isLoading, setIsLoading] = useState(true)
+
+  const fetchUser = async () => {
+    try {
+      const response = await fetch('/api/auth/me')
+      if (response.ok) {
+        const userData = await response.json()
+        setUser(userData.user)
+      } else {
+        setUser(null)
+      }
+    } catch (error) {
+      console.error('Error fetching user:', error)
+      setUser(null)
+    } finally {
       setIsLoading(false)
     }
-    
-    getUser()
-    
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setUser(session?.user || null)
-        setIsAdmin(session?.user?.email === "sittnerkalid@gmail.com")
-      }
-    )
-    
-    return () => {
-      authListener?.subscription.unsubscribe()
+  }
+
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      setUser(null)
+      window.location.href = '/'
+    } catch (error) {
+      console.error('Logout error:', error)
     }
-  }, [supabase])
+  }
+
+  useEffect(() => {
+    fetchUser()
+  }, [])
+
+  const value = {
+    user,
+    isAdmin: user?.isAdmin || false,
+    isLoading,
+    logout,
+    refreshUser: fetchUser
+  }
 
   return (
-    <UserContext.Provider value={{ user, isAdmin, isLoading, logout }}>
+    <UserContext.Provider value={value}>
       {children}
     </UserContext.Provider>
   )

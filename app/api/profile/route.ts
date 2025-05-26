@@ -1,49 +1,46 @@
-import { createClient } from '@/utils/supabase/server'
+import { getProfileByUserId, upsertProfile } from '@/utils/db'
 import { NextRequest, NextResponse } from 'next/server'
+import { getCurrentSession } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient()
-  
   // Get user ID from session
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
+  const session = await getCurrentSession()
+
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  
-  const userId = user.id
-  
-  // Get profile data
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('user_id', userId)
-    .single()
-  
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+
+  const userId = session.user.id
+
+  try {
+    // Get profile data
+    const profile = await getProfileByUserId(userId)
+
+    if (!profile) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({ data: profile })
+  } catch (error) {
+    console.error('Error fetching profile:', error)
+    return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 })
   }
-  
-  return NextResponse.json({ data })
 }
 
 export async function PUT(request: NextRequest) {
-  const supabase = await createClient()
-  
   // Get user ID from session
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
+  const session = await getCurrentSession()
+
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  
-  const userId = user.id
+
+  const userId = session.user.id
   const profileData = await request.json()
-  
-  // Update profile data
-  const { data, error } = await supabase
-    .from('profiles')
-    .update({
+
+  try {
+    // Update profile data
+    const updatedProfile = await upsertProfile(userId, {
       name: profileData.name,
       email: profileData.email,
       phone: profileData.phone,
@@ -57,13 +54,10 @@ export async function PUT(request: NextRequest) {
       projects: profileData.projects,
       experience: profileData.experience
     })
-    .eq('user_id', userId)
-    .select()
-  
-  if (error) {
-    console.log(error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+
+    return NextResponse.json({ data: updatedProfile })
+  } catch (error) {
+    console.error('Error updating profile:', error)
+    return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 })
   }
-  
-  return NextResponse.json({ data })
 }
